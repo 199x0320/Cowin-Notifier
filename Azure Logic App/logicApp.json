@@ -1,0 +1,197 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "For_each_3": {
+                "actions": {
+                    "Condition": {
+                        "actions": {
+                            "Send_email_(V4)": {
+                                "inputs": {
+                                    "body": {
+                                        "from": "vpnaik97@gmail.com",
+                                        "ishtml": true,
+                                        "subject": "Vaccine Available",
+                                        "text": "<p>Vaccine : &nbsp;@{items('For_each_3')?['vaccine']}<br>\nCapacity: &nbsp;&nbsp;@{items('For_each_3')?['available_capacity']}<br>\nAvailable at @{items('For_each_3')?['address']} on @{items('For_each_3')?['date']}</p>",
+                                        "to": "vpnaik97@gmail.com"
+                                    },
+                                    "host": {
+                                        "connection": {
+                                            "name": "@parameters('$connections')['sendgrid']['connectionId']"
+                                        }
+                                    },
+                                    "method": "post",
+                                    "path": "/v4/mail/send"
+                                },
+                                "runAfter": {},
+                                "type": "ApiConnection"
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "not": {
+                                        "equals": [
+                                            "@items('For_each_3')?['available_capacity']",
+                                            0
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        "runAfter": {},
+                        "type": "If"
+                    }
+                },
+                "foreach": "@body('Parse_JSON')?['sessions']",
+                "runAfter": {
+                    "Parse_JSON": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "HTTP": {
+                "inputs": {
+                    "method": "GET",
+                    "uri": "https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?pincode=581121&date=14-05-2021"
+                },
+                "runAfter": {},
+                "type": "Http"
+            },
+            "Parse_JSON": {
+                "inputs": {
+                    "content": "@body('HTTP')",
+                    "schema": {
+                        "properties": {
+                            "sessions": {
+                                "items": {
+                                    "properties": {
+                                        "address": {
+                                            "type": "string"
+                                        },
+                                        "available_capacity": {
+                                            "type": "integer"
+                                        },
+                                        "block_name": {
+                                            "type": "string"
+                                        },
+                                        "center_id": {
+                                            "type": "integer"
+                                        },
+                                        "date": {
+                                            "type": "string"
+                                        },
+                                        "district_name": {
+                                            "type": "string"
+                                        },
+                                        "fee": {
+                                            "type": "string"
+                                        },
+                                        "fee_type": {
+                                            "type": "string"
+                                        },
+                                        "from": {
+                                            "type": "string"
+                                        },
+                                        "lat": {
+                                            "type": "integer"
+                                        },
+                                        "long": {
+                                            "type": "integer"
+                                        },
+                                        "min_age_limit": {
+                                            "type": "integer"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "pincode": {
+                                            "type": "integer"
+                                        },
+                                        "session_id": {
+                                            "type": "string"
+                                        },
+                                        "slots": {
+                                            "items": {
+                                                "type": "string"
+                                            },
+                                            "type": "array"
+                                        },
+                                        "state_name": {
+                                            "type": "string"
+                                        },
+                                        "to": {
+                                            "type": "string"
+                                        },
+                                        "vaccine": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "center_id",
+                                        "name",
+                                        "address",
+                                        "state_name",
+                                        "district_name",
+                                        "block_name",
+                                        "pincode",
+                                        "from",
+                                        "to",
+                                        "lat",
+                                        "long",
+                                        "fee_type",
+                                        "session_id",
+                                        "date",
+                                        "available_capacity",
+                                        "fee",
+                                        "min_age_limit",
+                                        "vaccine",
+                                        "slots"
+                                    ],
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            }
+                        },
+                        "type": "object"
+                    }
+                },
+                "runAfter": {
+                    "HTTP": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "ParseJson"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "Recurrence": {
+                "recurrence": {
+                    "frequency": "Minute",
+                    "interval": 3
+                },
+                "type": "Recurrence"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "sendgrid": {
+                    "connectionId": "----------your coonection Id",
+                    "connectionName": "sendgrid",
+                    "id": "------------------------------ Id ----------------------"
+                }
+            }
+        }
+    }
+}
